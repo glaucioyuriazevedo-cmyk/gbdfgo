@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)file:///C:/Users/Pai/OneDrive/Desktop/gbdnovo.html -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GBD FGO — Painel Operacional</title>
+<style>
+  :root{
+    --navy: #0F2A43;
+    --navy-2: #16385A;
+    --amber: #E8A020;
+    --paper: #F6F4EF;
+    --paper-2: #EDEAE2;
+    --ink: #1C2430;
+    --ink-soft: #55606E;
+    --line: #C9CCC3;
+    --ok: #2E7D5B;
+    --ok-bg: #E4F0EA;
+    --err: #B23A34;
+    --bg: var(--paper);
+    --fg: var(--ink);
+    --card-bg: #FFFFFF;
+    --card-line: var(--line);
+    --field-bg: #FFFFFF;
+    --stripe: #F2F0E9;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+  a{ color: inherit; }
+
+  /* ---------- HERO / BOARD ---------- */
+  .board{
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: #F2EFE6;
+    padding: 26px 20px 0;
+    position: relative;
+  }
+  .board::after{
+    content:"";
+    display:block;
+    height: 6px;
+    margin-top: 22px;
+    background: repeating-linear-gradient(90deg, var(--amber) 0 26px, transparent 26px 40px);
+    opacity:.9;
+  }
+  .board-inner{
+    max-width: 880px;
+    margin: 0 auto;
+    padding-bottom: 4px;
+  }
+  .eyebrow-row{
+    display:flex; align-items:center; justify-content: space-between;
+    gap:10px;
+    font-size: 12.5px;
+    letter-spacing: .02em;
+    color: #C9D3DE;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .eyebrow-left{ display:flex; align-items:center; gap:9px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background: var(--amber); flex: none; }
+  .clock{ font-variant-numeric: tabular-nums; color: #F2EFE6; font-weight: 600; }
+
+  .title-row{
+    display:flex; align-items:flex-end; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap;
+  }
+  h1{ margin: 0 0 6px; font-size: clamp(26px, 5vw, 36px); font-weight: 700; letter-spacing: -0.01em; }
+  .board p.lede{ margin: 0 0 18px; color: #C9D3DE; font-size: 14.5px; max-width: 58ch; }
+
+  .date-field{
+    display:flex; align-items:center; gap: 10px;
+    margin: 4px 0 18px;
+  }
+  .date-field label{
+    font-size: 12.5px; font-weight: 600; color: #C9D3DE;
+    text-transform: none;
+  }
+  .date-field input[type="date"]{
+    background: rgba(242,239,230,.08);
+    border: 1px solid rgba(242,239,230,.35);
+    color: #F2EFE6;
+    font-family: inherit;
+    font-size: 13.5px;
+    padding: 7px 10px;
+    border-radius: 3px;
+    color-scheme: dark;
+  }
+  .date-field input[type="date"]:focus{
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 2px rgba(232,160,32,.25);
+  }
+
+  .edit-toggle{
+    display:flex; gap:8px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .edit-btn{
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    border-radius: 3px; padding: 9px 14px; cursor: pointer;
+    border: 1px solid rgba(242,239,230,.35);
+    background: rgba(242,239,230,.08);
+    color: #F2EFE6;
+    transition: background .12s ease;
+  }
+  .edit-btn:hover{ background: rgba(242,239,230,.16); }
+  .edit-btn.primary{ background: var(--amber); border-color: var(--amber); color: #1C2430; }
+  .edit-btn.primary:hover{ filter: brightness(1.08); }
+
+  /* ---------- TABS ---------- */
+  .tabs{
+    display:flex; gap: 4px; max-width: 880px; margin: 0 auto; padding: 0 20px;
+    position: sticky; top: 0; z-index: 10; background: var(--bg);
+    border-bottom: 1px solid var(--card-line); overflow-x: auto;
+  }
+  .tab-btn{
+    appearance:none; background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 14px 14px 12px; font-family: inherit; font-size: 14px; font-weight: 600;
+    color: var(--ink-soft); cursor: pointer; white-space: nowrap;
+    transition: color .12s ease, border-color .12s ease;
+  }
+  .tab-btn:hover{ color: var(--fg); }
+  .tab-btn.active{ color: var(--navy); border-bottom-color: var(--amber); }
+
+  main{ max-width: 880px; margin: 0 auto; padding: 26px 20px 60px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .card{
+    background: var(--card-bg); border: 1px solid var(--card-line); border-radius: 4px;
+    padding: 22px 22px 20px; margin-bottom: 18px;
+  }
+
+  .section-title{
+    font-size: 12.5px; font-weight: 700; color: var(--navy); letter-spacing: .01em;
+    margin: 0 0 14px; display:flex; align-items:center; gap: 8px;
+  }
+  .section-title::before{ content:""; width: 3px; height: 14px; background: var(--amber); display:inline-block; }
+
+  .obs-banner{
+    border: 1px solid #D8B36B; background: #FBF3E1; color: #5C4416; border-radius: 4px;
+    padding: 16px 18px; font-size: 13.5px; margin-bottom: 18px; line-height: 1.6;
+  }
+
+  table{ width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th{ text-align: left; font-size: 12px; font-weight: 600; color: #F2EFE6; background: var(--navy); padding: 9px 12px; }
+  td{ padding: 9px 12px; border-bottom: 1px solid var(--card-line); vertical-align: top; }
+  tr:nth-child(even) td{ background: var(--stripe); }
+  .posto-name{ font-weight: 600; white-space: nowrap; }
+
+  .name-input{
+    width: 100%; padding: 6px 8px; font-family: inherit; font-size: 13.5px;
+    border: 1px solid var(--amber); border-radius: 3px; background: #FFFDF6; color: var(--fg);
+  }
+  .name-input:focus{ outline: none; box-shadow: 0 0 0 2px rgba(232,160,32,.3); }
+
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 640px){ .grid2{ grid-template-columns: 1fr; } }
+
+  .lideres-line{
+    margin-top: 14px; padding: 10px 14px; background: var(--paper-2); border-radius: 3px;
+    font-size: 13.5px; font-weight: 600;
+  }
+
+  .rules-list{ margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .rules-list li{ margin-bottom: 8px; }
+  .rules-list li:last-child{ margin-bottom: 0; }
+
+  .note-italic{ font-size: 13.5px; font-style: italic; color: var(--ink-soft); }
+
+  .atestado-row{ display:flex; align-items:center; gap: 10px; font-size: 14px; }
+  .badge{
+    display:inline-flex; align-items:center; padding: 3px 9px; background: var(--err); color: #fff;
+    font-size: 11.5px; font-weight: 700; border-radius: 2px;
+  }
+
+  .toast{
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--navy); color: #F2EFE6; padding: 11px 18px; border-radius: 4px;
+    font-size: 13.5px; font-weight: 600; opacity: 0; pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease; z-index: 100;
+  }
+  .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- FORM (Sinalizar) ---------- */
+  fieldset{ border:none; margin:0; padding:0; }
+  legend{ font-size: 13px; font-weight: 600; color: var(--ink-soft); padding: 0 0 14px; }
+  .field{ margin-bottom: 16px; }
+  .field:last-child{ margin-bottom: 0; }
+  label{ display:block; font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+  .hint{ font-size: 12.5px; color: var(--ink-soft); font-weight: 400; margin-top: 4px; }
+  input[type="text"], input[type="date"], input[type="time"], select, textarea{
+    width: 100%; padding: 10px 11px; background: var(--field-bg); border: 1px solid var(--card-line);
+    border-radius: 3px; color: var(--fg); font-family: inherit; font-size: 14.5px;
+    transition: border-color .15s ease;
+  }
+  input:focus, select:focus, textarea:focus{
+    outline: none; border-color: var(--navy-2); box-shadow: 0 0 0 3px rgba(22,56,90,.15);
+  }
+  textarea{ min-height: 84px; resize: vertical; }
+  .row2{ display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 480px){ .row2{ grid-template-columns: 1fr; } }
+
+  .choice-group{ display:flex; gap: 10px; flex-wrap: wrap; }
+  .choice{ position: relative; }
+  .choice input{ position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; }
+  .choice span{
+    display:inline-flex; align-items:center; gap:7px; padding: 9px 14px; border: 1px solid var(--card-line);
+    border-radius: 3px; font-size: 13.5px; font-weight: 500; color: var(--fg); background: var(--field-bg);
+    cursor:pointer; transition: all .12s ease;
+  }
+  .choice input:checked + span{ border-color: var(--navy-2); background: var(--navy); color:#fff; }
+
+  .required{ color:#B87A00; }
+  .checkline{ display:flex; align-items:flex-start; gap:10px; font-size: 13.5px; color: var(--ink-soft); }
+  .checkline input{ margin-top: 3px; flex: none; }
+
+  .submit-row{ display:flex; justify-content: flex-end; margin-top: 22px; gap: 10px; }
+
+  button{
+    font-family: inherit; font-size: 14.5px; font-weight: 600; border-radius: 3px; border: 1px solid transparent;
+    padding: 11px 20px; cursor: pointer; transition: filter .12s ease, transform .05s ease;
+  }
+  button:active{ transform: translateY(1px); }
+  .btn-primary{ background: var(--navy); color:#fff; }
+  .btn-primary:hover{ filter: brightness(1.12); }
+  .btn-ghost{ background: transparent; color: var(--fg); border-color: var(--card-line); }
+  .btn-ghost:hover{ background: var(--paper-2); }
+
+  .error-msg{ color: var(--err); font-size: 12.5px; margin-top: 5px; display:none; }
+  .field.invalid .error-msg{ display:block; }
+  .field.invalid input, .field.invalid select{ border-color: var(--err); }
+
+  .confirm{
+    display:none; border: 1px solid var(--ok); background: var(--ok-bg); color: #1D4B36;
+    border-radius: 4px; padding: 18px 20px; margin-bottom: 18px;
+  }
+  .confirm.show{ display:block; }
+  .confirm h2{ margin:0 0 8px; font-size: 15px; }
+  .summary{
+    background: var(--card-bg); border: 1px solid var(--card-line); border-radius: 3px;
+    padding: 14px 16px; font-size: 13.5px; white-space: pre-wrap; margin: 10px 0 14px; color: var(--fg);
+  }
+  .confirm .actions{ display:flex; gap:10px; flex-wrap: wrap; }
+
+  .log h3{ font-size: 13px; color: var(--ink-soft); margin: 0 0 10px; font-weight: 600; }
+  .log-entry{
+    border: 1px solid var(--card-line); border-left: 3px solid var(--amber); border-radius: 2px;
+    padding: 10px 12px; margin-bottom: 8px; font-size: 13px;
+  }
+  .log-entry .meta{ color: var(--ink-soft); font-size: 12px; margin-bottom: 3px; }
+  .log-empty{ color: var(--ink-soft); font-size: 13px; font-style: italic; }
+  .clear-log{
+    background:none; border:none; color: var(--ink-soft); font-size: 12.5px; text-decoration: underline;
+    cursor:pointer; padding:0; margin-top: 10px;
+  }
+
+  footer{ max-width: 880px; margin: 0 auto; padding: 0 20px 40px; font-size: 12px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <div class="board-inner">
+    <div class="eyebrow-row">
+      <div class="eyebrow-left"><span class="dot"></span>Painel Operacional</div>
+      <div class="clock" id="clock">11:56:22</div>
+    </div>
+    <div class="title-row">
+      <div>
+        <h1>GBD FGO</h1>
+      </div>
+    </div>
+    <div class="date-field">
+      <label for="dataReferencia">Referente</label>
+      <input type="date" id="dataReferencia">
+    </div>
+    <div class="edit-toggle">
+      <button class="edit-btn primary" id="editToggleBtn" type="button">Editar nomes</button>
+      <button class="edit-btn" id="restoreBtn" type="button">Restaurar dados originais</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="hoje">Escala do dia</button>
+    <button class="tab-btn" data-tab="semana">SSO — Semana</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ===================== PAINEL: HOJE ===================== -->
+  <section class="panel active" id="panel-hoje">
+
+    <div class="obs-banner">
+      Sempre passando pela análise e avaliação dos líderes para que, em caso de inconformidade, sejam feitas alterações necessárias, antes ou após o lançamento do GBD. Em casos de indisponibilidade (indisposição física ou psicológica, o que é normal), fica a critério do colaborador sinalizar diretamente os líderes.
+    </div>
+
+    <div class="card">
+      <div class="section-title">Postos fixos</div>
+      <table>
+        <thead><tr><th style="width:40%">Posto</th><th>Colaborador(es)</th></tr></thead>
+        <tbody id="tbl-postos"><tr><td class="posto-name">SSO</td><td>Galdino</td></tr><tr><td class="posto-name">Plataforma 1</td><td>Galdino </td></tr><tr><td class="posto-name">Plataforma 2</td><td>Galdino </td></tr><tr><td class="posto-name">Mezanino 5</td><td>Galdino</td></tr></tbody>
+      </table>
+      <div class="lideres-line">Líderes: <span id="lideres-text">Galdino</span></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title">Rodízio 3/6 — AAS</div>
+        <table>
+          <thead><tr><th style="width:30%">Horário</th><th>Colaboradores</th></tr></thead>
+          <tbody id="tbl-aas"><tr><td>11:00</td><td>Galdino</td></tr><tr><td>12:00</td><td>Galdino</td></tr><tr><td>13:00</td><td>Galdino</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Rodízio 3/6 — AA</div>
+        <table>
+          <thead><tr><th style="width:30%">Horário</th><th>Colaborador</th></tr></thead>
+          <tbody id="tbl-aa"><tr><td>11:00</td><td>Galdino</td></tr><tr><td>12:00</td><td>Galdino</td></tr><tr><td>13:00</td><td>Galdino</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Rodízio 3/6 — Líderes</div>
+      <p class="note-italic" style="margin:0;">Em acordo com necessidades operacionais.</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Funções de rendição e checklist</div>
+      <table>
+        <thead><tr><th style="width:40%">Função</th><th>Responsável</th></tr></thead>
+        <tbody id="tbl-funcoes"><tr><td class="posto-name">Rendição SSO</td><td>Galdino</td></tr><tr><td class="posto-name">Embarque trem</td><td>Galdino</td></tr><tr><td class="posto-name">Checklist estação</td><td>Galdino</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Rendição de plataformas — regras</div>
+      <p style="font-size:13.5px; margin: 0 0 10px;">Responsáveis: Líderes / AAS / AA.</p>
+      <ul class="rules-list">
+        <li>Atentar em quem vai subir e seus respectivos horários, e quantos vão permanecer em seus postos.</li>
+        <li>Efetivo mínimo: Plataforma = <strong>3/1</strong> · Mezanino 5 = <strong>1 colaborador</strong>.</li>
+        <li>Realizar comunicação via rádio para sinalizar a rendição: chamar um dos líderes, verificar o ID na resposta e chamar diretamente no ID (demanda interna de FGO).</li>
+        <li>Atenção às rendições para que ninguém ultrapasse os horários de saída/retorno do almoço e saída de final de plantão.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Atestado</div>
+      <div class="atestado-row">
+        <span class="badge">Atestado</span>
+        <span id="atestado-text">Galdino</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAINEL: SEMANA ===================== -->
+  <section class="panel" id="panel-semana">
+    <div class="card">
+      <div class="section-title">SSO — Escala semanal</div>
+      <table>
+        <thead><tr><th style="width:40%">Dia</th><th>Colaborador</th></tr></thead>
+        <tbody id="tbl-semana"><tr><td class="posto-name">2ª — Segunda</td><td>Fernanda</td></tr><tr><td class="posto-name">3ª — Terça</td><td>Galdino</td></tr><tr><td class="posto-name">4ª — Quarta</td><td>Laura</td></tr><tr><td class="posto-name">5ª — Quinta</td><td>Flávio</td></tr><tr><td class="posto-name">6ª — Sexta</td><td>Barbosa</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+
+</main>
+
+<footer>GBD FGO · Painel de uso interno · Clique em "Editar nomes" para atualizar a escala</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  // =========================================================
+  // DADOS — edite aqui no código se preferir, ou use o botão
+  // "Editar nomes" na própria página.
+  // =========================================================
+  const DEFAULT_DATA = {
+    dataReferencia: '2026-09-18',
+    postos: [
+      { posto: 'SSO', nomes: 'Barbosa, Ana' },
+      { posto: 'Plataforma 1', nomes: 'Galdino, Laura' },
+      { posto: 'Plataforma 2', nomes: 'Fernanda, Rodrigues' },
+      { posto: 'Mezanino 5', nomes: 'Jeane e Tharliane (plataformas 1 e 2, conforme necessidade operacional)' }
+    ],
+    lideres: 'Alcântara / Mauricio / Pilar',
+    aas: [
+      { horario: '11:00', nomes: 'Fernanda / Galdino' },
+      { horario: '12:00', nomes: 'Rodrigues / Laura' },
+      { horario: '13:00', nomes: 'Flávio / Barbosa' }
+    ],
+    aa: [
+      { horario: '11:00', nomes: 'Tharliane' },
+      { horario: '12:00', nomes: 'Ana' },
+      { horario: '13:00', nomes: 'Jeane' }
+    ],
+    funcoes: [
+      { funcao: 'Rendição SSO', resp: 'Rodrigues' },
+      { funcao: 'Embarque trem', resp: 'Flávio / Galdino' },
+      { funcao: 'Checklist estação', resp: 'Laura' }
+    ],
+    atestado: 'Diego',
+    semana: [
+      { dia: '2ª — Segunda', nome: 'Fernanda' },
+      { dia: '3ª — Terça', nome: 'Galdino' },
+      { dia: '4ª — Quarta', nome: 'Laura' },
+      { dia: '5ª — Quinta', nome: 'Flávio' },
+      { dia: '6ª — Sexta', nome: 'Barbosa' }
+    ]
+  };
+
+  const STORAGE_DATA_KEY = 'fgo_gbd_dados';
+  let DATA = loadData();
+  let editMode = false;
+
+  function loadData(){
+    try{
+      const raw = localStorage.getItem(STORAGE_DATA_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+  function persistData(){
+    try{ localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(DATA)); }catch(e){}
+  }
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : str;
+    return d.innerHTML;
+  }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  // ---------- Renderers ----------
+  function renderPostos(){
+    const tb = document.getElementById('tbl-postos');
+    tb.innerHTML = '';
+    DATA.postos.forEach(function(row, i){
+      const tr = document.createElement('tr');
+      const tdA = document.createElement('td');
+      tdA.className = 'posto-name';
+      tdA.textContent = row.posto;
+      const tdB = document.createElement('td');
+      if(editMode){
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'name-input';
+        inp.value = row.nomes;
+        inp.addEventListener('input', function(){ DATA.postos[i].nomes = inp.value; });
+        tdB.appendChild(inp);
+      } else {
+        tdB.textContent = row.nomes;
+      }
+      tr.appendChild(tdA); tr.appendChild(tdB);
+      tb.appendChild(tr);
+    });
+    document.getElementById('lideres-text').textContent = DATA.lideres;
+  }
+
+  function renderSimpleNameTable(containerId, rows, keyA, keyB, dataArr){
+    const tb = document.getElementById(containerId);
+    tb.innerHTML = '';
+    rows.forEach(function(row, i){
+      const tr = document.createElement('tr');
+      const tdA = document.createElement('td');
+      tdA.textContent = row[keyA];
+      const tdB = document.createElement('td');
+      if(editMode){
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'name-input';
+        inp.value = row[keyB];
+        inp.addEventListener('input', function(){ dataArr[i][keyB] = inp.value; });
+        tdB.appendChild(inp);
+      } else {
+        tdB.textContent = row[keyB];
+      }
+      tr.appendChild(tdA); tr.appendChild(tdB);
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderFuncoes(){
+    const tb = document.getElementById('tbl-funcoes');
+    tb.innerHTML = '';
+    DATA.funcoes.forEach(function(row, i){
+      const tr = document.createElement('tr');
+      const tdA = document.createElement('td');
+      tdA.className = 'posto-name';
+      tdA.textContent = row.funcao;
+      const tdB = document.createElement('td');
+      if(editMode){
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'name-input';
+        inp.value = row.resp;
+        inp.addEventListener('input', function(){ DATA.funcoes[i].resp = inp.value; });
+        tdB.appendChild(inp);
+      } else {
+        tdB.textContent = row.resp;
+      }
+      tr.appendChild(tdA); tr.appendChild(tdB);
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderSemana(){
+    const tb = document.getElementById('tbl-semana');
+    tb.innerHTML = '';
+    DATA.semana.forEach(function(row, i){
+      const tr = document.createElement('tr');
+      const tdA = document.createElement('td');
+      tdA.className = 'posto-name';
+      tdA.textContent = row.dia;
+      const tdB = document.createElement('td');
+      if(editMode){
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'name-input';
+        inp.value = row.nome;
+        inp.addEventListener('input', function(){ DATA.semana[i].nome = inp.value; });
+        tdB.appendChild(inp);
+      } else {
+        tdB.textContent = row.nome;
+      }
+      tr.appendChild(tdA); tr.appendChild(tdB);
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderAtestado(){
+    const el = document.getElementById('atestado-text');
+    if(editMode){
+      el.innerHTML = '';
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'name-input';
+      inp.style.maxWidth = '240px';
+      inp.value = DATA.atestado;
+      inp.addEventListener('input', function(){ DATA.atestado = inp.value; });
+      el.appendChild(inp);
+    } else {
+      el.textContent = DATA.atestado;
+    }
+  }
+
+  function renderLideres(){
+    const el = document.getElementById('lideres-text');
+    if(editMode){
+      el.innerHTML = '';
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'name-input';
+      inp.style.maxWidth = '320px';
+      inp.value = DATA.lideres;
+      inp.addEventListener('input', function(){ DATA.lideres = inp.value; });
+      el.appendChild(inp);
+    } else {
+      el.textContent = DATA.lideres;
+    }
+  }
+
+  function renderAll(){
+    renderPostos();
+    renderLideres();
+    renderSimpleNameTable('tbl-aas', DATA.aas, 'horario', 'nomes', DATA.aas);
+    renderSimpleNameTable('tbl-aa', DATA.aa, 'horario', 'nomes', DATA.aa);
+    renderFuncoes();
+    renderAtestado();
+    renderSemana();
+  }
+
+  // ---------- Edit toggle ----------
+  const editToggleBtn = document.getElementById('editToggleBtn');
+  const restoreBtn = document.getElementById('restoreBtn');
+
+  editToggleBtn.addEventListener('click', function(){
+    if(editMode){
+      // was editing -> save
+      persistData();
+      editMode = false;
+      editToggleBtn.textContent = 'Editar nomes';
+      showToast('Alterações salvas neste navegador.');
+    } else {
+      editMode = true;
+      editToggleBtn.textContent = 'Salvar alterações';
+    }
+    renderAll();
+  });
+
+  restoreBtn.addEventListener('click', function(){
+    if(!confirm('Restaurar todos os nomes para os valores originais do GBD? As alterações salvas neste navegador serão perdidas.')) return;
+    DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    persistData();
+    editMode = false;
+    editToggleBtn.textContent = 'Editar nomes';
+    renderAll();
+    document.getElementById('dataReferencia').value = DATA.dataReferencia || '';
+    showToast('Dados originais restaurados.');
+  });
+
+  renderAll();
+
+  // ---------- Data de referência ----------
+  const dataReferenciaInput = document.getElementById('dataReferencia');
+  dataReferenciaInput.value = DATA.dataReferencia || '';
+  dataReferenciaInput.addEventListener('change', function(){
+    DATA.dataReferencia = dataReferenciaInput.value;
+    persistData();
+    showToast('Data atualizada.');
+  });
+
+  // ---------- Tabs ----------
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panels = {
+    hoje: document.getElementById('panel-hoje'),
+    semana: document.getElementById('panel-semana')
+  };
+  tabBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabBtns.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      Object.keys(panels).forEach(function(key){ panels[key].classList.remove('active'); });
+      panels[btn.dataset.tab].classList.add('active');
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+
+  // ---------- Clock ----------
+  function pad(n){ return n.toString().padStart(2,'0'); }
+  function updateClock(){
+    const now = new Date();
+    const el = document.getElementById('clock');
+    if(el){ el.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds()); }
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+})();
+</script>
+
+
+</body></html>
